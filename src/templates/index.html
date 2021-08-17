@@ -65,6 +65,15 @@
             <button onclick="testDrawer(this)" id='test-btn' class="btn btn-sm btn-info">Test drawer</button>
             <button onclick="savePort()" class="btn btn-sm btn-success">Save this port as default</button>
             </div>
+
+            <div class="d-flex justify-content-between align-center mb-4">
+              <div class="form-check">
+                <input class="form-check-input" type="checkbox" value="1" id="Adasys" onclick="Adasys()">
+                <label class="form-check-label" for="Adasys">
+                  Adasys hardware 
+                </label>
+              </div>             
+              
           </div>
         </div>
     </div>
@@ -89,7 +98,7 @@
       ipcRenderer.on('log', logEvent)
 
       // init ports select
-      ipcRenderer.on('list-com-ports', (event, { ports, savedPort }) => {
+      ipcRenderer.on('list-com-ports', (event, { ports, savedPort, adasys }) => {
         const portsSelect = document.getElementById('com-ports');
         ports.forEach((port) => {
           const optionEl = document.createElement('option');
@@ -100,6 +109,10 @@
         if (savedPort) {
           portsSelect.value = savedPort;
         }
+        if(adasys)        
+          document.getElementById("Adasys").checked = true;        
+        else
+        document.getElementById("Adasys").checked = false;
       });
 
       // helper func, gets current selected port
@@ -116,6 +129,18 @@
 
       function savePort() {
         ipcRenderer.send('save-port', { port: getValue() });
+      }
+
+      function Adasys() {
+        var adasysSetting = 0;
+        if (document.getElementById('Adasys').checked) 
+        {
+          adasysSetting = true;
+        } 
+        else {
+          adasysSetting = false;
+        }
+        ipcRenderer.send('adasys', { isAdasys: adasysSetting });
       }
     </script>
   </body>

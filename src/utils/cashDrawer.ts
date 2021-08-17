@@ -2,8 +2,10 @@ import { BrowserWindow, ipcMain } from 'electron';
 import SerialPort, { OpenOptions } from 'serialport';
 import { localStorage } from './localStorage';
 import { log } from './logger';
+import {PE17CashDrawer} from '../electron';
 
 export const COM_PORT_STORAGE_KEY = 'selected-com-port';
+export const ADASYS = 'adasys-system';
 const CANDIDATE_PID = 'VID_067B&PID_2303';
 const OPEN_CASH_DRAWER_COMMAND = Buffer.from([0x1b, 0x70, 0, 50, 50]);
 const CASH_DRAWER_OPTIONS: OpenOptions = {
@@ -45,11 +47,30 @@ export function attemptToOpenDrawer(path: string = localStorage.get(COM_PORT_STO
  * preselects com port if nothing is defined in settings
  */
 export async function makeSureSettingsHaveComPort() {
-  const existing = localStorage.get(COM_PORT_STORAGE_KEY);
-  if (existing) return existing;
-  const ports = await SerialPort.list();
-  let candidate = ports.find((port) => port.pnpId?.includes(CANDIDATE_PID));
-  if (!candidate) candidate = ports.find((port) => port.vendorId && port.productId) || ports[0];
-  log("Couldn't find settings file. Detected default port as", candidate.path)
-  return localStorage.set(COM_PORT_STORAGE_KEY, candidate.path);
+  try{
+    const existing = localStorage.get(COM_PORT_STORAGE_KEY);
+    if (existing) return existing;
+    const ports = await SerialPort.list();
+    let candidate = ports.find((port) => port.pnpId?.includes(CANDIDATE_PID));
+    if (!candidate) candidate = ports.find((port) => port.vendorId && port.productId) || ports[0];
+    log("Couldn't find settings file. Detected default port as", candidate.path)
+    return localStorage.set(COM_PORT_STORAGE_KEY, candidate.path);
+  }
+  catch (error) {
+    console.log(error)
+  }
+  
 }
+
+export function adasysToOpenDrawer() {
+  return new Promise((resolve, reject) => {    
+      PE17CashDrawer.open(1, 50);
+      setTimeout(function() { 
+        if (PE17CashDrawer.isOpen(1))
+          resolve('no errors');
+        else
+          reject('error using dll');
+        }, 3);     
+  });
+}
+
